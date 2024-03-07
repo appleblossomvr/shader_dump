@@ -34,26 +34,42 @@ Shader "Apple/DVDCRT"
             uniform float4 _MainTex_Scale;
             uniform float4 _Speed;
 
+            static const float4 ColorList[8] = {
+                float4(1,1,1,1),
+                float4(1,1,.5,1),
+                float4(.5,1,1,1),
+                float4(1,.5,1,1),
+                float4(1,0,0,1),
+                float4(0,1,0,1),
+                float4(0,0,1,1),
+                float4(1,0,0,1)
+            };
+
             float4 frag(v2f_customrendertexture IN) : SV_Target {
                 float2 uv = IN.globalTexcoord.xy;
                 
                 //scale uv from (0-1) to (-1, 1)
-                uv = uv * 2 - 1;
+                uv = uv * 2. - 1;
 
                 //take in time, and modulo by the current "speed" values, using abs to make it ping-pong across each axis
-                float2 time = abs(((_Time.y + _Speed.zw) % (_Speed.xy * 2)) - _Speed.xy) / _Speed.xy - .5;
-                uv += time;
-                uv /= _MainTex_Scale.xy;
+                float2 time = abs(((_Time.y + _Speed.zw) % (_Speed.xy * 2)) - _Speed.xy) / _Speed.xy * 2 - 1;
+                uv += time * (1 - _MainTex_Scale.xy);
 
-                //scale uv back to (0-1)
+                //scale uv back to (0-1) in maintex space
+                uv /= (_MainTex_Scale.xy);
                 uv = uv * .5 + .5;
                 
                 //sample texture with modified UV
                 float4 color = tex2D(_MainTex, uv);
 
+                //get color index by flooring the time scales, which gives us how many times we've bounced
+                uint colorIndex = uint((floor((_Time.y + _Speed.z) / _Speed.x) + floor((_Time.y + _Speed.w) / _Speed.y)) % 8);
+                color *= ColorList[colorIndex];
+
                 //remove color outside boundary, can also be done by different sampler settings but w/e
                 color *= all(uv.xy > 0 && uv.xy < 1);
 
+                color.rgb *= color.a;
                 return color;
             }
             ENDCG
