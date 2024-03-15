@@ -17,3 +17,7 @@ Colorspace Dither ([ColorspaceDither.shader](ColorspaceDither/ColorspaceDither.s
 DVD Logo ([DVDCRT.shader](DVDCRT.shader)):
 
 ![DVD Logo](other_previews/dvd_preview.gif)
+
+Simple Wireframe ([SimpleWireframe.shader](SimpleWireframe/SimpleWireframe.shader)):
+
+![Simple Wireframe](SimpleWireframe/preview.png)
