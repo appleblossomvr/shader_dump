@@ -6,25 +6,20 @@
 struct appdata
 {
     float4 vertex : POSITION;
-    float2 uv : TEXCOORD0;
 };
 
 struct v2g
 {
     float4 vertex : SV_POSITION;
-    float2 uv : TEXCOORD0;
 };
 
 struct g2f
 {
     float4 vertex : SV_POSITION;
-    float2 uv : TEXCOORD0;
     float3 triangleValue : TEXCOORD1;
     float distance : TEXCOORD2;
 };
 
-sampler2D _MainTex;
-float4 _MainTex_ST;
 float4 _Color, _BackfaceColor, _BackgroundColor;
 float _Thickness, _CutoffFalloff, _CutoffSmoothing;
 float _BackfaceBrightness;
@@ -40,8 +35,7 @@ static const float3 triangleValues[3] = {
 v2g vert (appdata v)
 {
     v2g o;
-    o.vertex = v.vertex;
-    o.uv = v.uv;
+    o.vertex = mul(unity_ObjectToWorld, v.vertex);
 
     return o;
 }
@@ -52,10 +46,9 @@ void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream){
 
     [unroll(3)]
     for(int i=0; i<3; i++){
-        o.vertex = UnityObjectToClipPos(input[i].vertex);
-        o.uv = TRANSFORM_TEX(input[i].uv, _MainTex);
+        o.distance =  lerp(1, max(.1, distance(input[i].vertex.xyz, _WorldSpaceCameraPos.xyz)), _CutoffFalloff);
+        o.vertex = mul(UNITY_MATRIX_VP, input[i].vertex);
         o.triangleValue = triangleValues[i];
-        o.distance =  lerp(1, max(.1, distance(mul(unity_ObjectToWorld, input[i].vertex), _WorldSpaceCameraPos)), _CutoffFalloff);
 
         triStream.Append(o);
     }
@@ -66,21 +59,17 @@ void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream){
 
 float4 frag (g2f i) : SV_Target
 {
-    // after interpolation, (1 - [minimum triangle value]) will represent the distance to the nearest edge.
-    float cutoff = (1 - _Thickness);
-    
-    float edgeDistance = (1 - min(min(i.triangleValue.x, i.triangleValue.y), i.triangleValue.z))/i.distance;
-    float dDis = fwidth(edgeDistance);
-    float aaDis = smoothstep(cutoff - _CutoffSmoothing - dDis, cutoff, edgeDistance);
+    float edgeDistance = _Thickness + (1 - min(min(i.triangleValue.x, i.triangleValue.y), i.triangleValue.z))/i.distance;
+    float aaDis = smoothstep(1 - _CutoffSmoothing - fwidth(edgeDistance), 1, edgeDistance);
 
-    //clip(edgeDistance - (1 - _Thickness) + dDis);
+    //clip(aaDis);
 
-    //the backface pass can be disabled in favor of just a single pass with no culling, using SV_FACING.
 #ifdef _BACKFACE
     float4 color = _BackfaceColor;
 #else
     float4 color = _Color;
 #endif
+
     color.a *= saturate(aaDis);
 
 

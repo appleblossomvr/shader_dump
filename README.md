@@ -21,3 +21,6 @@ DVD Logo ([DVDCRT.shader](DVDCRT.shader)):
 Simple Wireframe ([SimpleWireframe.shader](SimpleWireframe/SimpleWireframe.shader)):
 
 ![Simple Wireframe](SimpleWireframe/preview.png)
+
+## Extra Credit
+Thanks to @OwenTheProgrammer for optimization advice on SimpleWireframe

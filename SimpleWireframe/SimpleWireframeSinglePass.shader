@@ -1,16 +1,16 @@
-Shader "Apple/SimpleWireframe"
+Shader "Apple/SimpleWireframeSinglePass"
 {
     // apple_blossom's simple wireframes!~
     // instead of complicated math, i just assign each vertex of each triangle to one of three floats in a vector3
     // then, once that vector3 is interpolated, the maximum value is the distance to each edge. this works surprisingly
     // well to create wireframes.
     //
-    // note: this version renders the backfaces in a separate pass, to keep the blending between front and back lines clean.
+    // this version renders the front and back at the same time.
+    
 
     Properties
     {
         [HDR] _Color("Wire Color", Color) = (.54,1,.85,1)
-        [HDR] _BackfaceColor("Backface Wire Color", Color) = (.125,.25,.25,1)
 
         _Thickness ("Thickness", Range(0, .05)) = 0
         _CutoffFalloff ("Thickness Falloff over Distance", Range(0.0, .25)) = 0.033
@@ -22,27 +22,10 @@ Shader "Apple/SimpleWireframe"
         Tags { "RenderType"="Transparent" "Queue" = "Transparent"}
         Blend SrcAlpha OneMinusSrcAlpha
         ZWrite Off
+        Cull Off
 
         Pass
         {
-            Cull Front
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
-
-            #define _BACKFACE
-
-            #include "UnityCG.cginc"
-            #include "wireframe.cginc"
-
-
-            ENDCG
-        }
-
-        Pass
-        {
-            Cull Back
             CGPROGRAM
             #pragma vertex vert
             #pragma geometry geom
